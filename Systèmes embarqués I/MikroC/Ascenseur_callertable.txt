@@ -23,9 +23,7 @@ main
 			Delay_22us
 		Mul_32x32_U
 		Div_32x32_U
-	gerer_boutons_etages
-		Button
-			Delay_500us
+	gerer_leds
 	afficher_lcd
 		sprintf
 			_doprntf
@@ -92,3 +90,83 @@ main
 					Delay_1us
 					Delay_5500us
 					Delay_50us
+	scanner_req
+	prochain_req
+	deplacer_vers
+		afficher_lcd
+			sprintf
+				_doprntf
+					isdigit
+					Mul_16X16_U
+					Compare_Double
+					Equals_Double
+					Div_16x16_S
+						Div_16x16_S_L
+					scale
+						Div_8X8_S
+						Mul_32x32_FP
+							RES032
+							SETFOV32
+							SETFUN32
+					Mul_32x32_FP
+						RES032
+						SETFOV32
+						SETFUN32
+					Div_32x32_FP
+						SETFDZ32
+						RES032
+						SETFOV32
+						SETFUN32
+					double2longword
+						SETIOV3224
+					longword2double
+						NRM4032
+							SETFUN32
+							FIXSIGN32
+							SETFOV32
+							RES032
+					Sub_32x32_FP
+						Add_32x32_FP
+							NRM4032
+								SETFUN32
+								FIXSIGN32
+								SETFOV32
+								RES032
+							SETFOV32
+					Add_32x32_FP
+						NRM4032
+							SETFUN32
+							FIXSIGN32
+							SETFOV32
+							RES032
+						SETFOV32
+					Div_32x32_U
+					fround
+						Div_8X8_U
+						Mul_32x32_FP
+							RES032
+							SETFOV32
+							SETFUN32
+					double2longint
+						SETIOV3224
+			Lcd_Out
+				Lcd_Cmd
+					Delay_1us
+					Delay_5500us
+					Delay_50us
+				Lcd_Chr_CP
+					Lcd_Cmd
+						Delay_1us
+						Delay_5500us
+						Delay_50us
+		lire_capteurs
+			ADC_Read
+				Delay_22us
+			Mul_32x32_U
+			Div_32x32_U
+		gerer_leds
+		Lcd_Chr
+			Lcd_Cmd
+				Delay_1us
+				Delay_5500us
+				Delay_50us

@@ -700,9 +700,11 @@ delay_5ms
 delay_80us
 delay_8ms
 delay_cyc
+deplacer_vers
 dhen
 dhen_bit
 dhen_ssp1con3_bit
+direction
 div
 div_16x16_s
 div_16x16_s_l
@@ -786,9 +788,10 @@ eeip
 eeip_bit
 eepgd
 eepgd_bit
+en_mouvement
 equals_double
 etage_actuel
-etage_precedent
+etage_cible
 f
 fast
 ferr
@@ -827,7 +830,7 @@ fvrst_bit
 gcen
 gcen_bit
 gcen_ssp1con2_bit
-gerer_boutons_etages
+gerer_leds
 get_fosc_khz
 gie
 gie_bit
@@ -972,7 +975,7 @@ ipr2
 ipr3
 ipr4
 ipr5
-ir_presence
+ir_porte
 ircf0
 ircf0_bit
 ircf1
@@ -1017,6 +1020,8 @@ kbi2
 kbi2_bit
 kbi3
 kbi3_bit
+l1
+l2
 labs
 lata
 lata0
@@ -1114,8 +1119,6 @@ lcd_rs_direction
 ldiv
 lfiofs
 lfiofs_bit
-ligne1
-ligne2
 lire_capteurs
 longint2double
 longjmp
@@ -1470,6 +1473,7 @@ preinc1
 preinc2
 prisd
 prisd_bit
+prochain_req
 prod
 prodh
 prodl
@@ -1517,7 +1521,15 @@ pvcfg0
 pvcfg0_bit
 pvcfg1
 pvcfg1_bit
+pwm1_init
+pwm1_set_duty
+pwm1_start
+pwm1_stop
 pwm1con
+pwm2_init
+pwm2_set_duty
+pwm2_start
+pwm2_stop
 pwm2con
 pwm3con
 pwmcon
@@ -1671,6 +1683,7 @@ re2
 re2_bit
 re3
 re3_bit
+req
 res032
 ri
 ri_bit
@@ -1705,6 +1718,7 @@ sbcde_bit
 sbcde_ssp1con3_bit
 sboren
 sboren_bit
+scanner_req
 scie
 scie_bit
 scie_ssp1con3_bit
