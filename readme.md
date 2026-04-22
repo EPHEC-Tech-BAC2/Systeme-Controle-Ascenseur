@@ -29,3 +29,4 @@
 - Définition des 3 interruptions simultanées (Timer0 / Externe / UART RX)
 - Définition de l'utilisation de la mémoire EEPROM I²C
 - Dépôt du cahier des charges sur Moodle au format PDF
+
