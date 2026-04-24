@@ -119,6 +119,7 @@ adon_bit
 adres
 adresh
 adresl
+afficher_etage_lcd
 afficher_lcd
 ahen
 ahen_bit
@@ -700,6 +701,7 @@ delay_5ms
 delay_80us
 delay_8ms
 delay_cyc
+demarrer_moteur
 deplacer_vers
 dhen
 dhen_bit
@@ -1579,6 +1581,8 @@ ra6
 ra6_bit
 ra7
 ra7_bit
+rampe_accel
+rampe_decel
 rand
 rb0
 rb0_bit

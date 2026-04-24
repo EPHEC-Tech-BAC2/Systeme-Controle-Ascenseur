@@ -1,5 +1,9 @@
 main
 	__CC2DW
+	PWM1_Init
+	PWM1_Set_Duty
+		Mul_16X16_U
+	PWM1_Start
 	ADC_Init
 	Lcd_Init
 		Delay_5500us
@@ -159,14 +163,31 @@ main
 						Delay_1us
 						Delay_5500us
 						Delay_50us
+		demarrer_moteur
+			PWM1_Set_Duty
+				Mul_16X16_U
+			PWM1_Start
+			rampe_accel
+				Mul_16X16_U
+				Div_16X16_U
+				PWM1_Set_Duty
+					Mul_16X16_U
+		PWM1_Set_Duty
+			Mul_16X16_U
+		rampe_decel
+			Mul_16X16_U
+			Div_16X16_U
+			PWM1_Set_Duty
+				Mul_16X16_U
 		lire_capteurs
 			ADC_Read
 				Delay_22us
 			Mul_32x32_U
 			Div_32x32_U
 		gerer_leds
-		Lcd_Chr
-			Lcd_Cmd
-				Delay_1us
-				Delay_5500us
-				Delay_50us
+		afficher_etage_lcd
+			Lcd_Chr
+				Lcd_Cmd
+					Delay_1us
+					Delay_5500us
+					Delay_50us
