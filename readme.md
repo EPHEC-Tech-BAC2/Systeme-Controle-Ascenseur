@@ -30,3 +30,13 @@
 - Définition de l'utilisation de la mémoire EEPROM I²C
 - Dépôt du cahier des charges sur Moodle au format PDF
 
+**Mise à jour Cahier des charges — Version 2**   
+
+- Correction du brochage des boutons d'étages BP1–BP4 → RD0, RD1, RD2, RD3
+- Correction du bouton d'acquittement ACQ → RD4
+- Reconfiguration du capteur IR sur RA0 en entrée digitale (simulation par bouton poussoir, pas d'ouverture automatique)
+- Remplacement du MOSFET IRF520 par le driver L293D : IN1=RC0, IN2=RC1, EN=RC2 (CCP1)
+- Ajout du brochage EEPROM I²C : SCL=RC3, SDA=RC4, adresse 0x50
+- Confirmation du brochage UART : TX=RC6, RX=RC7 à 9600 bauds
+- Mise à jour du tableau récapitulatif complet du brochage
+- Ajout de la section Historique des révisions (V1.0 → V2.0)
