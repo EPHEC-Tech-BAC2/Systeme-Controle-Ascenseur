@@ -119,11 +119,11 @@ adon_bit
 adres
 adresh
 adresl
-afficher_etage_lcd
 afficher_lcd
 ahen
 ahen_bit
 ahen_ssp1con3_bit
+al_active
 an0
 an0_bit
 an1
@@ -1453,6 +1453,7 @@ pmd0
 pmd1
 pmd2
 poids_kg
+poids_max
 por
 por_bit
 port_to_tris_offset
@@ -1782,6 +1783,7 @@ setfov32
 setfun32
 setiov3224
 setjmp
+seuil_surge
 slra
 slra_bit
 slrb
@@ -2476,6 +2478,7 @@ uart_rd_ptr
 uart_rdy_ptr
 uart_read
 uart_read_text
+uart_send_data
 uart_set_active
 uart_tx_idle
 uart_tx_idle_ptr
@@ -2501,6 +2504,7 @@ uart2_write_text
 uart2md
 uart2md_bit
 uldiv
+urg_active
 vdelay_advanced_ms
 vdelay_ms
 vdirmag
