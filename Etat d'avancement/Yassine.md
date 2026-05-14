@@ -8,6 +8,8 @@
 | 4 | 21/04/2026 | Implémentation du fonctionnement de l’ascenseur | Développement du code MikroC pour la gestion du mouvement, des 4 étages et de l’affichage sur LCD. |
 | 5 | 22/04/2026 | Début du développement sous LabVIEW | Création des événements de l’interface et début de la programmation de la communication pour l’envoi et la réception des données. |
 | 6 | 22/04/2026 | Câblage et intégration des fonctions de communication | Mise en place d’une partie du câblage et début de l’intégration des commandes d’envoi et de réception. |
+| 7 | 12/05/2026 | Correction du programme sous LabVIEW | Correction des événements, des shift registers, des erreurs 1 et 85, ainsi que du comportement des LEDs. |
+| 8 | 13/05/2026 | Mise en place de la communication LabVIEW / PIC | Mise en place de la communication entre LabVIEW et le PIC, avec envoi des commandes de LabVIEW vers le PIC et retour des données dans l’autre sens. |
 
 
 ## Avancement hors séances
