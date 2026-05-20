@@ -22,3 +22,23 @@
   - `Sauvegarde.vi`
   - `Gestion_Alarmes.vi`
 - Sauvegarde de l’historique des trajets dans un fichier texte formaté
+- Mise en place du fonctionnement AUTO / MANU avec un passage correct d’un mode à l’autre.
+- Ajout de la configuration des seuils depuis LabVIEW :
+  - `seuil de poids maximum,`
+  - `vitesse maximale,`
+  - `envoi des paramètres de configuration vers le PIC en mode manuel.`
+Communication fiable entre LabVIEW et le PIC pour l’échange des commandes et des états du système.
+Gestion du mode manuel avec les commandes de montée et de descente, et démarrage correct du moteur dans le sens demandé.
+Gestion de la porte avec ouverture et fermeture fonctionnelles.
+Mise en place et validation du mode urgence :
+  - `déclenchement de l’arrêt d’urgence,`
+  - `communication correcte entre LabVIEW et le PIC,`
+  - `acquittement possible depuis LabVIEW ou avec le bouton physique.`
+- Mise en place et validation du mode alarme :
+  - `déclenchement de l’alarme,`
+  - `acquittement possible depuis LabVIEW ou avec le bouton physique. `
+Intégration des échanges avec la mémoire EEPROM :
+  - `lecture et mise à jour des données, `    
+  - `gestion de la vitesse sauvegardée,`
+  - `récupération des informations enregistrées.`
+Amélioration de l’affichage LCD avec un rendu plus propre et plus lisible, en affichant les principales informations du système.
