@@ -27,18 +27,24 @@
   - `seuil de poids maximum,`
   - `vitesse maximale,`
   - `envoi des paramètres de configuration vers le PIC en mode manuel.`
-Communication fiable entre LabVIEW et le PIC pour l’échange des commandes et des états du système.
-Gestion du mode manuel avec les commandes de montée et de descente, et démarrage correct du moteur dans le sens demandé.
-Gestion de la porte avec ouverture et fermeture fonctionnelles.
-Mise en place et validation du mode urgence :
+  - `Communication fiable entre LabVIEW et le PIC pour l’échange des commandes et des états du système.`
+  - `Gestion du mode manuel avec les commandes de montée et de descente, et démarrage correct du moteur dans le sens demandé.`
+  - `Gestion de la porte avec ouverture et fermeture fonctionnelles.`
+- Mise en place et validation du mode urgence :
   - `déclenchement de l’arrêt d’urgence,`
   - `communication correcte entre LabVIEW et le PIC,`
   - `acquittement possible depuis LabVIEW ou avec le bouton physique.`
 - Mise en place et validation du mode alarme :
   - `déclenchement de l’alarme,`
   - `acquittement possible depuis LabVIEW ou avec le bouton physique. `
-Intégration des échanges avec la mémoire EEPROM :
+- Intégration des échanges avec la mémoire EEPROM :
   - `lecture et mise à jour des données, `    
   - `gestion de la vitesse sauvegardée,`
-  - `récupération des informations enregistrées.`
-Amélioration de l’affichage LCD avec un rendu plus propre et plus lisible, en affichant les principales informations du système.
+  - `récupération des informations enregistrées.`  
+- Amélioration de l’affichage LCD avec un rendu plus propre et plus lisible, en affichant les principales informations du système.
+- Optimisation de la table de contrôle LabVIEW :
+  - `ajout des en-têtes,`
+  - `meilleure lisibilité,`
+- suppression des affichages répétitifs avec mise à jour seulement quand l’état change.
+- Mise en place de la sauvegarde des données dans un fichier texte avec génération automatique des en-têtes et formatage propre des informations.
+- Finalisation du câblage des shift registers afin de conserver les données affichées lors des changements d’événements et d’assurer une meilleure stabilité de l’interface.
