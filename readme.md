@@ -40,3 +40,11 @@
 - Confirmation du brochage UART : TX=RC6, RX=RC7 à 9600 bauds
 - Mise à jour du tableau récapitulatif complet du brochage
 - Ajout de la section Historique des révisions (V1.0 → V2.0)
+
+**Mise à jour Cahier des charges — Version 3**
+ 
+- Suppression de <CMD,START> et <CMD,PAUSE> : logique gérée localement dans LabVIEW via Event Structure, aucune communication PIC nécessaire
+- Ajout de <CMD,MOT:STOP> : arrêt du moteur en mode manuel (EN=0 sur L293D) sans déclencher les routines d'alarme
+- Ajout de <CMD,EEP:RST> : remise à zéro des données sauvegardées en EEPROM (compteur trajets, dernier étage, vitesse configurée)
+- Mise à jour de la trame DATA : ajout des champs NB (compteur de trajets session courante — RAM, remis à 0 au redémarrage), PWM (rapport cyclique moteur en %) et TPS (durée du dernier trajet en secondes)
+- Ajout de la section Historique des révisions (V2.0 → V3.0)
