@@ -48,3 +48,13 @@
 - suppression des affichages répétitifs avec mise à jour seulement quand l’état change.
 - Mise en place de la sauvegarde des données dans un fichier texte avec génération automatique des en-têtes et formatage propre des informations.
 - Finalisation du câblage des shift registers afin de conserver les données affichées lors des changements d’événements et d’assurer une meilleure stabilité de l’interface.
+- Suppression des commandes `<CMD,START>` et `<CMD,PAUSE>` qui ne servaient plus.
+- Ajout de `<CMD,MOT:STOP>` pour arrêter proprement le moteur en mode manuel en coupant `EN = 0` sur le L293D. Cette commande permet aussi d’arrêter le moteur entre deux étages, par exemple lors d’un déplacement de 0 vers 1, et de le laisser à l’arrêt jusqu’à une nouvelle action de l’opérateur.
+- Ajout de `<CMD,EEP:RST>` pour remettre à zéro les données enregistrées en EEPROM, comme le compteur de trajets, le dernier étage mémorisé et la vitesse réglée.
+- Mise à jour de la trame `DATA` avec de nouveaux champs :
+  - `NB` pour le nombre de trajets de la session en cours,
+  - `PWM` pour le rapport cyclique du moteur en pourcentage,
+  - `TPS` pour la durée du dernier trajet en secondes.
+- Amélioration de l’interface LabVIEW pour avoir un affichage plus propre et plus clair.
+- Mise à jour de la table de contrôle seulement quand une donnée change, afin d’éviter les répétitions inutiles et le spam d’affichage.
+- Prise en compte des fluctuations du potentiomètre entre deux valeurs proches : l’information n’est mise à jour que s’il y a un vrai changement, pour éviter d’afficher des variations inutiles.
