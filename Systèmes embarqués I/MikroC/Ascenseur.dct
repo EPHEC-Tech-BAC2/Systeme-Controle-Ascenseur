@@ -582,6 +582,9 @@ cm1con0
 cm2con
 cm2con0
 cm2con1
+cmd_qhead
+cmd_qtail
+cmd_queue
 cmp1md
 cmp1md_bit
 cmp2md
@@ -786,6 +789,10 @@ eeif
 eeif_bit
 eeip
 eeip_bit
+eep_read_byte
+eep_read_word
+eep_write_byte
+eep_write_word
 eepgd
 eepgd_bit
 equals_double
@@ -1372,6 +1379,7 @@ p3ssbd0
 p3ssbd0_bit
 p3ssbd1
 p3ssbd1_bit
+parser_cmd
 pc
 pcie
 pcie_bit
@@ -1437,6 +1445,7 @@ pmd0
 pmd1
 pmd2
 poids_kg
+pop_cmd
 por
 por_bit
 port_to_tris_offset
@@ -1678,6 +1687,8 @@ rsen_bit
 rsen_ssp1con2_bit
 rx_
 rx__bit
+rx_buf
+rx_idx
 rx1
 rx1_bit
 rx2
@@ -2456,6 +2467,8 @@ txsta2
 ua
 ua_bit
 ua_ssp1stat_bit
+uart_ack_err
+uart_ack_ok
 uart_data_ready
 uart_rd_ptr
 uart_rdy_ptr

@@ -20,3 +20,6 @@ Amélioration du code MikroC.
 04 — Initialisation UART + envoi automatique de trames <DATA>
 05 — Timer0 16 bits + envoi de <DATA> toutes les 2 secondes
 06 — Interruption externe RB6/RB7 pour urgence et alarme
+07 — Interruption UART RX + assemblage de trames <CMD>
+08 — Traitement des commandes <CMD> reçues de LabVIEW
+09 — EEPROM I²C lecture/écriture
