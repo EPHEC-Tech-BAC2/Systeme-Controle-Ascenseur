@@ -1,233 +1,188 @@
 #line 1 "C:/Users/moham/OneDrive/Documents/EPHEC TECH 2eme/Systeme embarqué/projet-final-a08_a211_25_26/Systèmes embarqués I/MikroC/Ascenseur.c"
-sbit LCD_RS at RB4_bit;
-sbit LCD_EN at RB5_bit;
-sbit LCD_D4 at RB0_bit;
-sbit LCD_D5 at RB1_bit;
-sbit LCD_D6 at RB2_bit;
-sbit LCD_D7 at RB3_bit;
-sbit LCD_RS_Direction at TRISB4_bit;
-sbit LCD_EN_Direction at TRISB5_bit;
-sbit LCD_D4_Direction at TRISB0_bit;
-sbit LCD_D5_Direction at TRISB1_bit;
-sbit LCD_D6_Direction at TRISB2_bit;
-sbit LCD_D7_Direction at TRISB3_bit;
-#line 34 "C:/Users/moham/OneDrive/Documents/EPHEC TECH 2eme/Systeme embarqué/projet-final-a08_a211_25_26/Systèmes embarqués I/MikroC/Ascenseur.c"
+#line 15 "C:/Users/moham/OneDrive/Documents/EPHEC TECH 2eme/Systeme embarqué/projet-final-a08_a211_25_26/Systèmes embarqués I/MikroC/Ascenseur.c"
 unsigned char etage_actuel = 0;
-unsigned char etage_cible = 0;
-unsigned char en_mouvement = 0;
 char direction = 'S';
 unsigned int poids_kg = 0;
 unsigned char ir_porte = 0;
-unsigned char req[ 4 ] = {0, 0, 0, 0};
-
 unsigned char al_active = 0;
 unsigned char urg_active = 0;
-unsigned int poids_max =  630 ;
-unsigned int seuil_surge = 693;
+unsigned char mode_auto = 1;
+unsigned int nb_session = 0;
+unsigned char pwm_actuel = 0;
+unsigned int temps_trajet = 0;
+unsigned char porte_cmd = 0;
 
-char l1[17], l2[17];
+volatile unsigned char suppress_data_count = 0;
+
+volatile unsigned char timer0_flag = 0;
+volatile unsigned int timer0_count = 0;
+volatile unsigned char urgence_flag = 0;
+volatile unsigned char al_flag = 0;
+
+void init_timer1();
+
+void interrupt() {
+ if (TMR0IE_bit && TMR0IF_bit) {
+ TMR0IF_bit = 0;
+ TMR0H =  ((unsigned char)(( (65536UL - ( 16000000UL  / 1024UL) )  >> 8) & 0xFF)) ;
+ TMR0L =  ((unsigned char)( (65536UL - ( 16000000UL  / 1024UL) )  & 0xFF)) ;
+ timer0_flag = 1;
+ timer0_count++;
+ }
+
+ if (TMR1IE_bit && TMR1IF_bit) {
+ TMR1IF_bit = 0;
+ TMR1H = 0xFE;
+ TMR1L = 0x0C;
+ if (al_active)  LATC5_bit  = ~ LATC5_bit ;
+ else  LATC5_bit  = 0;
+ }
+}
 
 void uart_send_data() {
- char trame[64];
- unsigned char dir_n;
- unsigned char prt_n;
+ char trame[90];
+ unsigned char dir_n, prt_n;
+
+ if (suppress_data_count > 0) {
+ suppress_data_count--;
+ return;
+ }
 
  if (direction == 'U') dir_n = 1;
  else if (direction == 'D') dir_n = 2;
  else dir_n = 0;
 
- prt_n = ir_porte ? 1 : 0;
+ prt_n = mode_auto ? (ir_porte ? 1 : 0) : (porte_cmd ? 1 : 0);
 
  sprintf(trame,
- "<DATA,ET:%d,DIR:%d,PT:%d,PRT:%d,AL:%d,URG:%d>\r\n",
+ "<DATA,ET:%d,DIR:%d,PT:%d,PRT:%d,AL:%d,URG:%d,NB:%d,PWM:%d,TPS:%d>\r\n",
  (int)etage_actuel, (int)dir_n, (int)poids_kg,
- (int)prt_n, (int)al_active, (int)urg_active);
+ (int)prt_n, (int)al_active, (int)urg_active,
+ (int)nb_session, (int)pwm_actuel, (int)temps_trajet);
+
  UART1_Write_Text(trame);
 }
 
-void lire_capteurs() {
- ir_porte = PORTA.F0;
- poids_kg = (unsigned int)((ADC_Read(1) * 900UL) / 1023UL);
-}
-
-void gerer_leds() {
-  LATA2_bit  = ir_porte ? 1 : 0;
-  LATA3_bit  = (poids_kg >= seuil_surge || urg_active || al_active) ? 1 : 0;
-}
-
-void afficher_lcd() {
- if (en_mouvement) {
- sprintf(l1, "ET:%u->%u %s     ",
- (unsigned)etage_actuel,
- (unsigned)etage_cible,
- (direction == 'U') ? "UP" : "DN");
- } else {
- sprintf(l1, "ET:%u STOP       ",
- (unsigned)etage_actuel);
- }
- Lcd_Out(1, 1, l1);
-
- sprintf(l2, "P:%3dkg IR:%c    ",
- (int)poids_kg, ir_porte ? 'O' : 'F');
- Lcd_Out(2, 1, l2);
-}
-
-void rampe_accel() {
- unsigned char i;
- unsigned int pwm;
- for (i = 0; i <=  6 ; i++) {
- pwm =  80  + ((unsigned int)( 255  -  80 ) * i) /  6 ;
- PWM1_Set_Duty((unsigned char)pwm);
- Delay_ms( 150 );
- }
-}
-
-void rampe_decel() {
- unsigned char i;
- unsigned int pwm;
- for (i =  6 ; i > 0; i--) {
- pwm =  80  + ((unsigned int)( 255  -  80 ) * (i-1)) /  6 ;
- PWM1_Set_Duty((unsigned char)pwm);
- Delay_ms( 150 );
- }
-  do { LATC0_bit = 0; LATC1_bit = 0; PWM1_Set_Duty(0); } while(0) ;
-}
-
-void demarrer_moteur(char sens) {
- if (sens == 'U')  do { LATC0_bit = 1; LATC1_bit = 0; } while(0) ;
- else  do { LATC0_bit = 0; LATC1_bit = 1; } while(0) ;
- PWM1_Set_Duty( 80 );
- PWM1_Start();
- rampe_accel();
-}
-
-void scanner_req() {
- if (PORTD.F0) req[0] = 1;
- if (PORTD.F1) req[1] = 1;
- if (PORTD.F2) req[2] = 1;
- if (PORTD.F3) req[3] = 1;
-}
-
-unsigned char prochain_req() {
- unsigned char i, nearest;
- unsigned int d, min_d;
-
- req[etage_actuel] = 0;
- nearest = 0xFF;
- min_d = 10;
- for (i = 0; i <  4 ; i++) {
- if (!req[i]) continue;
- d = (i >= etage_actuel) ? (i - etage_actuel) : (etage_actuel - i);
- if (d < min_d) { min_d = d; nearest = i; }
- }
- if (nearest != 0xFF) { req[nearest] = 0; return nearest; }
- return 0xFF;
-}
-
-void deplacer_vers(unsigned char cible) {
- char sens;
- unsigned char nb_et, i;
-
- if (cible == etage_actuel) return;
-
- sens = (cible > etage_actuel) ? 'U' : 'D';
- direction = sens;
- etage_cible = cible;
- en_mouvement = 1;
-
- afficher_lcd();
- uart_send_data();
- Delay_ms( 300 );
-
- nb_et = (cible > etage_actuel) ? (cible - etage_actuel)
- : (etage_actuel - cible);
- demarrer_moteur(sens);
- PWM1_Set_Duty( 255 );
-
- for (i = 0; i < nb_et; i++) {
- if (i == nb_et - 1 && nb_et == 1) Delay_ms( ( 1800  - 6  * 150 ) );
- else Delay_ms( 1800 );
-
- if (i == nb_et - 1) rampe_decel();
-
- if (sens == 'U') etage_actuel++;
- else etage_actuel--;
- afficher_lcd();
- }
-
-  do { LATC0_bit = 0; LATC1_bit = 0; PWM1_Set_Duty(0); } while(0) ;
- en_mouvement = 0;
- direction = 'S';
- etage_cible = etage_actuel;
- afficher_lcd();
- uart_send_data();
- Delay_ms( 600 );
+void init_timer1() {
+ T1CON = 0x00;
+ TMR1H = 0xFE;
+ TMR1L = 0x0C;
+ TMR1IF_bit = 0;
+ TMR1IE_bit = 1;
+ TMR1ON_bit = 1;
 }
 
 void main() {
- unsigned char prochain;
- unsigned int compteur_ms = 0;
-
- PWM1_Init(5000);
- PWM1_Set_Duty(0);
- PWM1_Start();
-
- ANSELA = 0x02;
- TRISA0_bit = 1;
- TRISA1_bit = 1;
- TRISA2_bit = 0;
+ ANSELA = 0x00;
  TRISA3_bit = 0;
- LATA2_bit = 0;
  LATA3_bit = 0;
 
  ANSELB = 0x00;
+ TRISB6_bit = 1;
+ TRISB7_bit = 1;
+ INTCON2.RBPU = 1;
 
  ANSELC = 0x00;
- TRISC0_bit = 0; TRISC1_bit = 0; TRISC2_bit = 0;
- TRISC6_bit = 0; TRISC7_bit = 1;
- LATC0_bit = 0; LATC1_bit = 0;
+ TRISC5_bit = 0;
+ TRISC6_bit = 0;
+ TRISC7_bit = 1;
+ LATC5_bit = 0;
 
  ANSELD = 0x00;
- TRISD = 0xFF;
-
- ADC_Init();
- ANSELA = 0x02; TRISA1_bit = 1;
+ TRISD4_bit = 1;
 
  UART1_Init(9600);
  Delay_ms(100);
 
- Lcd_Init();
- Lcd_Cmd(_LCD_CLEAR);
- Lcd_Cmd(_LCD_CURSOR_OFF);
- Lcd_Out(1, 1, " ASCENSEUR 4ET ");
- Lcd_Out(2, 1, "  V0.4 - EPHEC ");
- Delay_ms(1500);
- Lcd_Cmd(_LCD_CLEAR);
+ T0CON = 0x07;
+ TMR0H =  ((unsigned char)(( (65536UL - ( 16000000UL  / 1024UL) )  >> 8) & 0xFF)) ;
+ TMR0L =  ((unsigned char)( (65536UL - ( 16000000UL  / 1024UL) )  & 0xFF)) ;
+ TMR0IF_bit = 0;
+ TMR0IE_bit = 1;
 
- UART1_Write_Text("<DATA,ET:0,DIR:0,PT:0,PRT:0,AL:0,URG:0>\r\n");
+ init_timer1();
 
- lire_capteurs();
- gerer_leds();
- afficher_lcd();
+ PEIE_bit = 1;
+ GIE_bit = 1;
+ T0CON = 0x87;
+
+ UART1_Write_Text("<DATA,ET:0,DIR:0,PT:0,PRT:0,AL:0,URG:0,NB:0,PWM:0,TPS:0>\r\n");
 
  while (1) {
- lire_capteurs();
- gerer_leds();
 
- scanner_req();
- prochain = prochain_req();
-
- if (prochain != 0xFF && ir_porte == 0 && poids_kg < seuil_surge) {
- deplacer_vers(prochain);
+ if ( PORTB.F6  && !urg_active) {
+ Delay_ms(20);
+ if ( PORTB.F6 ) {
+ urg_active = 1;
+  LATA3_bit  = 1;
+ urgence_flag = 1;
+ }
  }
 
- compteur_ms += 50;
- if (compteur_ms >= 2000) {
- compteur_ms = 0;
+ if (urgence_flag) {
+ urgence_flag = 0;
+ uart_send_data();
+
+ {
+ unsigned char acq_recu = 0;
+ while (acq_recu == 0) {
+ Delay_ms(20);
+ if (timer0_flag) {
+ timer0_flag = 0;
+ uart_send_data();
+ }
+ if ( PORTD.F4  && ! PORTB.F6 ) {
+ Delay_ms(50);
+ acq_recu = 1;
+ }
+ }
+ Delay_ms(200);
+ }
+
+ urg_active = 0;
+ al_active = 0;
+ al_flag = 0;
+  LATA3_bit  = 0;
  uart_send_data();
  }
 
- afficher_lcd();
+ if (al_flag) {
+ al_flag = 0;
+ uart_send_data();
+
+ {
+ unsigned char acq_recu = 0;
+ while (acq_recu == 0) {
+ Delay_ms(20);
+ if (timer0_flag) {
+ timer0_flag = 0;
+ uart_send_data();
+ }
+ if ( PORTD.F4 ) {
  Delay_ms(50);
+ acq_recu = 1;
+ }
+ }
+ Delay_ms(200);
+ }
+
+ al_active = 0;
+  LATA3_bit  = 0;
+ uart_send_data();
+ }
+
+ if ( PORTB.F7  && !al_active) {
+ Delay_ms(20);
+ if ( PORTB.F7 ) {
+ al_active = 1;
+ al_flag = 1;
+  LATA3_bit  = 1;
+ }
+ }
+
+ if (timer0_flag) {
+ timer0_flag = 0;
+ uart_send_data();
+ }
  }
 }

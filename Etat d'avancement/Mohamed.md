@@ -15,3 +15,8 @@
 Ajout de UART1_Init(9600) et de la fonction uart_send_data() qui envoie 
 la trame <DATA,ET:%d,DIR:%d,PT:%d,PRT:%d,AL:%d,URG:%d> en format numerique.
 Emission automatique toutes les 2 secondes via un compteur dans la boucle.
+
+Amélioration du code MikroC. 
+04 — Initialisation UART + envoi automatique de trames <DATA>
+05 — Timer0 16 bits + envoi de <DATA> toutes les 2 secondes
+06 — Interruption externe RB6/RB7 pour urgence et alarme
