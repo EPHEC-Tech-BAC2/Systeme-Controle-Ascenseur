@@ -58,3 +58,5 @@
 - Amélioration de l’interface LabVIEW pour avoir un affichage plus propre et plus clair.
 - Mise à jour de la table de contrôle seulement quand une donnée change, afin d’éviter les répétitions inutiles et le spam d’affichage.
 - Prise en compte des fluctuations du potentiomètre entre deux valeurs proches : l’information n’est mise à jour que s’il y a un vrai changement, pour éviter d’afficher des variations inutiles.
+- Ajout de commentaires sur l’ensemble des événements LabVIEW et des sous-VIs.
+- Documentation complète du code pour mieux expliquer le rôle de chaque partie.
