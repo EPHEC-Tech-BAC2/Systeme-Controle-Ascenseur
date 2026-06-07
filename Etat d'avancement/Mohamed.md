@@ -23,3 +23,6 @@ Amélioration du code MikroC.
 07 — Interruption UART RX + assemblage de trames <CMD>
 08 — Traitement des commandes <CMD> reçues de LabVIEW
 09 — EEPROM I²C lecture/écriture
+10 — Sauvegarde des trajets en EEPROM + lecture sur demande
+11 — Gestion surcharge poids + alarme complète
+12 — Mode automatique complet avec file d’attente des étages

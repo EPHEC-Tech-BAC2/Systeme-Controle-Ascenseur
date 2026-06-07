@@ -119,6 +119,7 @@ adon_bit
 adres
 adresh
 adresl
+afficher_lcd
 ahen
 ahen_bit
 ahen_ssp1con3_bit
@@ -241,9 +242,11 @@ anselb
 anselc
 anseld
 ansele
+appliquer_pmax
 atof
 atoi
 atol
+attendre_ms
 b0
 b1
 b2
@@ -704,6 +707,8 @@ delay_5ms
 delay_80us
 delay_8ms
 delay_cyc
+demarrer_moteur
+deplacer_vers
 dhen
 dhen_bit
 dhen_ssp1con3_bit
@@ -795,8 +800,16 @@ eep_write_byte
 eep_write_word
 eepgd
 eepgd_bit
+eeprom_charger
+eeprom_reset
+eeprom_sauver_trajet
+en_mouvement
+entre_etages
 equals_double
 etage_actuel
+etage_cible
+etat_porte_char
+etat_surcharge
 f
 fast
 ferr
@@ -835,6 +848,7 @@ fvrst_bit
 gcen
 gcen_bit
 gcen_ssp1con2_bit
+gerer_leds
 get_fosc_khz
 gie
 gie_bit
@@ -1026,7 +1040,10 @@ kbi2
 kbi2_bit
 kbi3
 kbi3_bit
+l1
+l2
 labs
+last_etage
 lata
 lata0
 lata0_bit
@@ -1102,15 +1119,31 @@ late1
 late1_bit
 late2
 late2_bit
+lcd_build_surcharge_l2
 lcd_chr
 lcd_chr_cp
 lcd_cmd
+lcd_d4
+lcd_d4_direction
+lcd_d5
+lcd_d5_direction
+lcd_d6
+lcd_d6_direction
+lcd_d7
+lcd_d7_direction
+lcd_en
+lcd_en_direction
 lcd_init
 lcd_out
 lcd_out_cp
+lcd_rs
+lcd_rs_direction
+lcd_transition
+lcd_update_transit
 ldiv
 lfiofs
 lfiofs_bit
+lire_capteurs
 longint2double
 longjmp
 longword2double
@@ -1142,6 +1175,7 @@ lvv2_bit
 lvv3
 lvv3_bit
 main
+maj_surcharge
 max
 mc1out
 mc1out_bit
@@ -1162,6 +1196,7 @@ mfiosel
 mfiosel_bit
 min
 mode_auto
+moteur_actif
 msk0
 msk0_bit
 msk0_ssp1msk_bit
@@ -1200,6 +1235,7 @@ mult_mask
 n
 n_bit
 nb_session
+nb_trajets
 not_a
 not_a_bit
 not_a_ssp1stat_bit
@@ -1445,6 +1481,7 @@ pmd0
 pmd1
 pmd2
 poids_kg
+poids_max
 pop_cmd
 por
 por_bit
@@ -1455,6 +1492,7 @@ portc
 portd
 porte
 porte_cmd
+position_inconnue
 postdec0
 postdec1
 postdec2
@@ -1469,6 +1507,7 @@ preinc1
 preinc2
 prisd
 prisd_bit
+prochain_req
 prod
 prodh
 prodl
@@ -1517,6 +1556,7 @@ pvcfg0_bit
 pvcfg1
 pvcfg1_bit
 pwm_actuel
+pwm_max_eff
 pwm1_init
 pwm1_set_duty
 pwm1_start
@@ -1575,6 +1615,8 @@ ra6
 ra6_bit
 ra7
 ra7_bit
+rampe_accel
+rampe_decel
 rand
 rb0
 rb0_bit
@@ -1679,6 +1721,8 @@ re2
 re2_bit
 re3
 re3_bit
+recalc_pwm_max
+req
 res032
 ri
 ri_bit
@@ -1715,6 +1759,7 @@ sbcde_bit
 sbcde_ssp1con3_bit
 sboren
 sboren_bit
+scanner_req
 scie
 scie_bit
 scie_ssp1con3_bit
@@ -1769,11 +1814,13 @@ sendb1
 sendb1_bit
 sendb2
 sendb2_bit
+set_pwm
 setfdz32
 setfov32
 setfun32
 setiov3224
 setjmp
+seuil_surge
 slra
 slra_bit
 slrb
@@ -1949,6 +1996,7 @@ stkptr4
 stkptr4_bit
 stkunf
 stkunf_bit
+stop_demande
 str_cut_chr
 str_cut_left
 str_cut_right
@@ -2001,6 +2049,7 @@ strstr
 strtok
 sub_32x32_fp
 suppress_data_count
+surcharge_active
 swap
 swdte
 swdte_bit
@@ -2475,6 +2524,7 @@ uart_rdy_ptr
 uart_read
 uart_read_text
 uart_send_data
+uart_send_eeprom
 uart_set_active
 uart_tx_idle
 uart_tx_idle_ptr
@@ -2506,6 +2556,9 @@ vdelay_advanced_ms
 vdelay_ms
 vdirmag
 vdirmag_bit
+vider_req
+vitesse_eeprom
+vitesse_max_pc
 vpp
 vpp_bit
 vref_mask
