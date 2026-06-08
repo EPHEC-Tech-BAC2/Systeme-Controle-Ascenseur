@@ -26,3 +26,6 @@ Amélioration du code MikroC.
 10 — Sauvegarde des trajets en EEPROM + lecture sur demande
 11 — Gestion surcharge poids + alarme complète
 12 — Mode automatique complet avec file d’attente des étages
+13 — Mode manuel via commandes LabVIEW
+14 — Protocole ACK complet + gestion des erreurs de trames
+15 — Intégration finale, tests et nettoyage du code

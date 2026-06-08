@@ -93,6 +93,7 @@ void lcd_transition();
 void lcd_update_transit();
 
 void appliquer_pmax(unsigned int val);
+void appliquer_spd(unsigned char val);
 
 void attendre_ms(unsigned int ms);
 
@@ -439,14 +440,14 @@ void lcd_update_transit() {
  } else {
  mode_str[0]='M'; mode_str[1]='a'; mode_str[2]='n'; mode_str[3]='u'; mode_str[4]='\0';
  }
-#line 496 "C:/Users/moham/OneDrive/Documents/EPHEC TECH 2eme/Systeme embarqué/projet-final-a08_a211_25_26/Systèmes embarqués I/MikroC/Ascenseur.c"
+#line 497 "C:/Users/moham/OneDrive/Documents/EPHEC TECH 2eme/Systeme embarqué/projet-final-a08_a211_25_26/Systèmes embarqués I/MikroC/Ascenseur.c"
  sprintf(l1, "ET:%u->%u %s %s ",
  (unsigned)etage_actuel, (unsigned)etage_cible, dir_str, mode_str);
  Lcd_Out(1, 1, l1);
 
  sprintf(l2, "P:%3dkg IR:%c    ", (int)poids_kg, etat_porte_char());
  Lcd_Out(2, 1, l2);
-#line 506 "C:/Users/moham/OneDrive/Documents/EPHEC TECH 2eme/Systeme embarqué/projet-final-a08_a211_25_26/Systèmes embarqués I/MikroC/Ascenseur.c"
+#line 507 "C:/Users/moham/OneDrive/Documents/EPHEC TECH 2eme/Systeme embarqué/projet-final-a08_a211_25_26/Systèmes embarqués I/MikroC/Ascenseur.c"
 }
 
 void appliquer_pmax(unsigned int val) {
@@ -463,12 +464,29 @@ void appliquer_pmax(unsigned int val) {
  uart_send_data();
 }
 
+void appliquer_spd(unsigned char val) {
+ if (val > 100) val = 100;
+ if (val < 10) val = 10;
+
+ vitesse_max_pc = val;
+ vitesse_eeprom = val;
+ recalc_pwm_max();
+ eep_write_byte(0x03, vitesse_eeprom);
+
+ if (moteur_actif) set_pwm(pwm_max_eff);
+
+ suppress_data_count = 1;
+ uart_ack_ok();
+ uart_send_data();
+}
+
 void attendre_ms(unsigned int ms) {
  unsigned int elapsed = 0;
  unsigned char b;
  char local_cmd[50];
  char *pp;
  unsigned int pv;
+ unsigned char sv;
  unsigned char nc;
 
  while (elapsed < ms) {
@@ -496,6 +514,12 @@ void attendre_ms(unsigned int ms) {
  urgence_flag = 1;
  uart_ack_ok();
 
+ } else if (strstr(local_cmd, "MOT:STP") || strstr(local_cmd, "MOT:STOP")) {
+
+  do { LATC0_bit = 0; LATC1_bit = 0; PWM1_Set_Duty(0); moteur_actif = 0; pwm_actuel = 0; } while(0) ;
+ stop_demande = 1;
+ uart_ack_ok();
+
  } else if (strstr(local_cmd, "AL:ON")) {
  al_active = 1;
  al_flag = 1;
@@ -520,6 +544,15 @@ void attendre_ms(unsigned int ms) {
  pp++;
  }
  appliquer_pmax(pv);
+
+ } else if ((pp = strstr(local_cmd, "SPD:")) != 0) {
+ sv = 0;
+ pp += 4;
+ while (*pp >= '0' && *pp <= '9') {
+ sv = sv * 10 + (unsigned char)(*pp - '0');
+ pp++;
+ }
+ appliquer_spd(sv);
 
  } else if (strstr(local_cmd, "GET:EEP")) {
  uart_send_eeprom();
@@ -805,6 +838,7 @@ void parser_cmd(char *buf) {
  char *p;
  unsigned char cible;
  unsigned int pv;
+ unsigned char sv;
 
  p = strstr(buf, "CALL:");
  if (p) {
@@ -893,6 +927,44 @@ void parser_cmd(char *buf) {
  return;
  }
 
+ {
+ char *pP = strstr(buf, "PMAX:");
+ char *pS = strstr(buf, "SPD:");
+ if (pP && pS) {
+ pv = 0;
+ pP += 5;
+ while (*pP >= '0' && *pP <= '9') {
+ pv = pv * 10 + (unsigned int)(*pP - '0');
+ pP++;
+ }
+ sv = 0;
+ pS += 4;
+ while (*pS >= '0' && *pS <= '9') {
+ sv = sv * 10 + (unsigned char)(*pS - '0');
+ pS++;
+ }
+
+ if (pv < 1) pv = 1;
+ if (pv > 999) pv = 999;
+ poids_max = pv;
+ seuil_surge = pv;
+
+ if (sv > 100) sv = 100;
+ if (sv < 10) sv = 10;
+ vitesse_max_pc = sv;
+ vitesse_eeprom = sv;
+ recalc_pwm_max();
+ eep_write_byte(0x03, vitesse_eeprom);
+ if (moteur_actif) set_pwm(pwm_max_eff);
+
+ lire_capteurs();
+ maj_surcharge(1);
+ uart_ack_ok();
+ uart_send_data();
+ return;
+ }
+ }
+
  p = strstr(buf, "PMAX:");
  if (p) {
  pv = 0;
@@ -902,6 +974,93 @@ void parser_cmd(char *buf) {
  p++;
  }
  appliquer_pmax(pv);
+ return;
+ }
+
+ p = strstr(buf, "SPD:");
+ if (p) {
+ sv = 0;
+ p += 4;
+ while (*p >= '0' && *p <= '9') {
+ sv = sv * 10 + (unsigned char)(*p - '0');
+ p++;
+ }
+ appliquer_spd(sv);
+ return;
+ }
+
+ if (strstr(buf, "DOOR:O")) {
+ if (!mode_auto) {
+ porte_cmd = 1;
+ gerer_leds();
+ if (!moteur_actif) lcd_transition();
+ uart_ack_ok();
+ uart_send_data();
+ } else {
+ uart_ack_err();
+ }
+ return;
+ }
+
+ if (strstr(buf, "DOOR:F")) {
+ if (!mode_auto) {
+ porte_cmd = 0;
+ gerer_leds();
+ if (!moteur_actif) lcd_transition();
+ uart_ack_ok();
+ uart_send_data();
+ } else {
+ uart_ack_err();
+ }
+ return;
+ }
+
+ if (strstr(buf, "MOT:UP")) {
+ if (!mode_auto && !urg_active && !al_active && !surcharge_active) {
+ if (moteur_actif || en_mouvement) {
+ uart_ack_err();
+ } else if (etage_actuel >=  4  - 1) {
+ uart_ack_err();
+ } else {
+ uart_ack_ok();
+ deplacer_vers(etage_actuel + 1);
+ }
+ } else {
+ uart_ack_err();
+ }
+ return;
+ }
+
+ if (strstr(buf, "MOT:DWN")) {
+ if (!mode_auto && !urg_active && !al_active && !surcharge_active) {
+ if (moteur_actif || en_mouvement) {
+ uart_ack_err();
+ } else if (etage_actuel == 0) {
+ uart_ack_err();
+ } else {
+ uart_ack_ok();
+ deplacer_vers(etage_actuel - 1);
+ }
+ } else {
+ uart_ack_err();
+ }
+ return;
+ }
+
+ if (strstr(buf, "MOT:STP") || strstr(buf, "MOT:STOP")) {
+ if (!mode_auto) {
+  do { LATC0_bit = 0; LATC1_bit = 0; PWM1_Set_Duty(0); moteur_actif = 0; pwm_actuel = 0; } while(0) ;
+ direction = 'S';
+ en_mouvement = 0;
+ etat_surcharge = 0xFF;
+ lire_capteurs();
+ maj_surcharge(1);
+ lcd_transition();
+ uart_ack_ok();
+ uart_send_data();
+ } else {
+ uart_ack_err();
+ }
  return;
  }
 
