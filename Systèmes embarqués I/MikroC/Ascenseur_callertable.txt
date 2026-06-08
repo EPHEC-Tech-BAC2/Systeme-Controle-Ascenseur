@@ -49,7 +49,6 @@ main
 		recalc_pwm_max
 			Mul_16X16_U
 			Div_16X16_U
-	init_timer1
 	Lcd_Init
 		Delay_5500us
 		Delay_1us

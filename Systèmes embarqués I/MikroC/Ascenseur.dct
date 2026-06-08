@@ -926,7 +926,6 @@ idlen_bit
 indf0
 indf1
 indf2
-init_timer1
 int0
 int0_bit
 int0e

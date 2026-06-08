@@ -16,16 +16,16 @@ Ajout de UART1_Init(9600) et de la fonction uart_send_data() qui envoie
 la trame <DATA,ET:%d,DIR:%d,PT:%d,PRT:%d,AL:%d,URG:%d> en format numerique.
 Emission automatique toutes les 2 secondes via un compteur dans la boucle.
 
-Amélioration du code MikroC. 
-04 — Initialisation UART + envoi automatique de trames <DATA>
-05 — Timer0 16 bits + envoi de <DATA> toutes les 2 secondes
-06 — Interruption externe RB6/RB7 pour urgence et alarme
-07 — Interruption UART RX + assemblage de trames <CMD>
-08 — Traitement des commandes <CMD> reçues de LabVIEW
-09 — EEPROM I²C lecture/écriture
-10 — Sauvegarde des trajets en EEPROM + lecture sur demande
-11 — Gestion surcharge poids + alarme complète
-12 — Mode automatique complet avec file d’attente des étages
-13 — Mode manuel via commandes LabVIEW
-14 — Protocole ACK complet + gestion des erreurs de trames
-15 — Intégration finale, tests et nettoyage du code
+Amélioration du code MikroC.  
+04 — Initialisation UART + envoi automatique de trames <DATA>  
+05 — Timer0 16 bits + envoi de <DATA> toutes les 2 secondes  
+06 — Interruption externe RB6/RB7 pour urgence et alarme   
+07 — Interruption UART RX + assemblage de trames <CMD>  
+08 — Traitement des commandes <CMD> reçues de LabVIEW  
+09 — EEPROM I²C lecture/écriture  
+10 — Sauvegarde des trajets en EEPROM + lecture sur demande  
+11 — Gestion surcharge poids + alarme complète  
+12 — Mode automatique complet avec file d’attente des étages  
+13 — Mode manuel via commandes LabVIEW  
+14 — Protocole ACK complet + gestion des erreurs de trames  
+15 — Intégration finale, tests et nettoyage du code  

@@ -13,7 +13,7 @@ sbit LCD_D4_Direction at TRISB0_bit;
 sbit LCD_D5_Direction at TRISB1_bit;
 sbit LCD_D6_Direction at TRISB2_bit;
 sbit LCD_D7_Direction at TRISB3_bit;
-#line 65 "C:/Users/moham/OneDrive/Documents/EPHEC TECH 2eme/Systeme embarqué/projet-final-a08_a211_25_26/Systèmes embarqués I/MikroC/Ascenseur.c"
+#line 64 "C:/Users/moham/OneDrive/Documents/EPHEC TECH 2eme/Systeme embarqué/projet-final-a08_a211_25_26/Systèmes embarqués I/MikroC/Ascenseur.c"
 unsigned char etage_actuel = 0;
 unsigned char etage_cible = 0;
 unsigned char en_mouvement = 0;
@@ -108,25 +108,42 @@ unsigned char prochain_req();
 void deplacer_vers(unsigned char cible);
 void parser_cmd(char *buf);
 
-void init_timer1();
-
 void interrupt() {
  char c;
 
  if (TMR0IE_bit && TMR0IF_bit) {
  TMR0IF_bit = 0;
- TMR0H =  ((unsigned char)(( (65536UL - ( 16000000UL  / 1024UL) )  >> 8) & 0xFF)) ;
- TMR0L =  ((unsigned char)( (65536UL - ( 16000000UL  / 1024UL) )  & 0xFF)) ;
+ TMR0H =  ((unsigned char)(( (65536UL - ( 8000000UL  / 1024UL) )  >> 8) & 0xFF)) ;
+ TMR0L =  ((unsigned char)( (65536UL - ( 8000000UL  / 1024UL) )  & 0xFF)) ;
  timer0_flag = 1;
  timer0_count++;
  }
 
- if (TMR1IE_bit && TMR1IF_bit) {
- TMR1IF_bit = 0;
- TMR1H = 0xFE;
- TMR1L = 0x0C;
- if (al_active)  LATC5_bit  = ~ LATC5_bit ;
- else  LATC5_bit  = 0;
+ if (RBIE_bit && RBIF_bit) {
+ unsigned char pb = PORTB;
+ RBIF_bit = 0;
+
+ if ((pb & 0x40) && !urg_active) {
+ LATC0_bit = 0;
+ LATC1_bit = 0;
+ moteur_actif = 0;
+ pwm_actuel = 0;
+ urg_active = 1;
+ en_mouvement = 0;
+  LATA3_bit  = 1;
+ urgence_flag = 1;
+ }
+
+ if ((pb & 0x80) && !al_active) {
+ LATC0_bit = 0;
+ LATC1_bit = 0;
+ moteur_actif = 0;
+ pwm_actuel = 0;
+ al_active = 1;
+ al_flag = 1;
+ en_mouvement = 0;
+  LATA3_bit  = 1;
+ }
  }
 
  if (RC1IE_bit && RC1IF_bit) {
@@ -440,14 +457,14 @@ void lcd_update_transit() {
  } else {
  mode_str[0]='M'; mode_str[1]='a'; mode_str[2]='n'; mode_str[3]='u'; mode_str[4]='\0';
  }
-#line 497 "C:/Users/moham/OneDrive/Documents/EPHEC TECH 2eme/Systeme embarqué/projet-final-a08_a211_25_26/Systèmes embarqués I/MikroC/Ascenseur.c"
+#line 513 "C:/Users/moham/OneDrive/Documents/EPHEC TECH 2eme/Systeme embarqué/projet-final-a08_a211_25_26/Systèmes embarqués I/MikroC/Ascenseur.c"
  sprintf(l1, "ET:%u->%u %s %s ",
  (unsigned)etage_actuel, (unsigned)etage_cible, dir_str, mode_str);
  Lcd_Out(1, 1, l1);
 
  sprintf(l2, "P:%3dkg IR:%c    ", (int)poids_kg, etat_porte_char());
  Lcd_Out(2, 1, l2);
-#line 507 "C:/Users/moham/OneDrive/Documents/EPHEC TECH 2eme/Systeme embarqué/projet-final-a08_a211_25_26/Systèmes embarqués I/MikroC/Ascenseur.c"
+#line 523 "C:/Users/moham/OneDrive/Documents/EPHEC TECH 2eme/Systeme embarqué/projet-final-a08_a211_25_26/Systèmes embarqués I/MikroC/Ascenseur.c"
 }
 
 void appliquer_pmax(unsigned int val) {
@@ -1094,19 +1111,11 @@ void parser_cmd(char *buf) {
  uart_ack_err();
 }
 
-void init_timer1() {
- T1CON = 0x00;
- TMR1H = 0xFE;
- TMR1L = 0x0C;
- TMR1IF_bit = 0;
- TMR1IE_bit = 1;
- TMR1ON_bit = 1;
-}
-
 void main() {
  unsigned char prochain;
  char cmd[50];
  unsigned char surge_now;
+ unsigned char dummy_pb;
 
  PWM1_Init(5000);
  PWM1_Set_Duty(0);
@@ -1131,12 +1140,10 @@ void main() {
  TRISC2_bit = 0;
  TRISC3_bit = 0;
  TRISC4_bit = 1;
- TRISC5_bit = 0;
  TRISC6_bit = 0;
  TRISC7_bit = 1;
  LATC0_bit = 0;
  LATC1_bit = 0;
- LATC5_bit = 0;
 
  ANSELD = 0x00;
  TRISD = 0xFF;
@@ -1155,12 +1162,14 @@ void main() {
  eeprom_charger();
 
  T0CON = 0x07;
- TMR0H =  ((unsigned char)(( (65536UL - ( 16000000UL  / 1024UL) )  >> 8) & 0xFF)) ;
- TMR0L =  ((unsigned char)( (65536UL - ( 16000000UL  / 1024UL) )  & 0xFF)) ;
+ TMR0H =  ((unsigned char)(( (65536UL - ( 8000000UL  / 1024UL) )  >> 8) & 0xFF)) ;
+ TMR0L =  ((unsigned char)( (65536UL - ( 8000000UL  / 1024UL) )  & 0xFF)) ;
  TMR0IF_bit = 0;
  TMR0IE_bit = 1;
 
- init_timer1();
+ dummy_pb = PORTB;
+ RBIF_bit = 0;
+ RBIE_bit = 1;
 
  RC1IE_bit = 1;
  PEIE_bit = 1;

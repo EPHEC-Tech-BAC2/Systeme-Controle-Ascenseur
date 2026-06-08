@@ -15,7 +15,6 @@ sbit LCD_D7_Direction at TRISB3_bit;
 
 #define LED1       LATA2_bit
 #define LED2       LATA3_bit
-#define BUZZER     LATC5_bit
 
 #define BP_URGENCE PORTB.F6
 #define BP_ALARME  PORTB.F7
@@ -48,7 +47,7 @@ sbit LCD_D7_Direction at TRISB3_bit;
 
 #define MS_CROISIERE_1ET  (MS_CROISIERE - PWM_PALIERS * MS_PALIER)
 
-#define _FOSC_HZ        16000000UL
+#define _FOSC_HZ        8000000UL
 
 #define T0_TICKS_1S     (_FOSC_HZ / 1024UL)
 #define T0_RELOAD       (65536UL - T0_TICKS_1S)
@@ -156,8 +155,6 @@ unsigned char prochain_req();
 void deplacer_vers(unsigned char cible);
 void parser_cmd(char *buf);
 
-void init_timer1();
-
 void interrupt() {
     char c;
 
@@ -169,12 +166,31 @@ void interrupt() {
         timer0_count++;
     }
 
-    if (TMR1IE_bit && TMR1IF_bit) {
-        TMR1IF_bit = 0;
-        TMR1H = 0xFE;
-        TMR1L = 0x0C;
-        if (al_active) BUZZER = ~BUZZER;
-        else           BUZZER = 0;
+    if (RBIE_bit && RBIF_bit) {
+        unsigned char pb = PORTB;
+        RBIF_bit = 0;
+
+        if ((pb & 0x40) && !urg_active) {
+            LATC0_bit = 0;
+            LATC1_bit = 0;
+            moteur_actif = 0;
+            pwm_actuel = 0;
+            urg_active   = 1;
+            en_mouvement = 0;
+            LED2         = 1;
+            urgence_flag = 1;
+        }
+
+        if ((pb & 0x80) && !al_active) {
+            LATC0_bit = 0;
+            LATC1_bit = 0;
+            moteur_actif = 0;
+            pwm_actuel = 0;
+            al_active    = 1;
+            al_flag      = 1;
+            en_mouvement = 0;
+            LED2         = 1;
+        }
     }
 
     if (RC1IE_bit && RC1IF_bit) {
@@ -1150,19 +1166,11 @@ void parser_cmd(char *buf) {
     uart_ack_err();
 }
 
-void init_timer1() {
-    T1CON = 0x00;
-    TMR1H = 0xFE;
-    TMR1L = 0x0C;
-    TMR1IF_bit = 0;
-    TMR1IE_bit = 1;
-    TMR1ON_bit = 1;
-}
-
 void main() {
     unsigned char prochain;
     char          cmd[50];
     unsigned char surge_now;
+    unsigned char dummy_pb;
 
     PWM1_Init(5000);
     PWM1_Set_Duty(0);
@@ -1187,12 +1195,10 @@ void main() {
     TRISC2_bit = 0;
     TRISC3_bit = 0;
     TRISC4_bit = 1;
-    TRISC5_bit = 0;
     TRISC6_bit = 0;
     TRISC7_bit = 1;
     LATC0_bit = 0;
     LATC1_bit = 0;
-    LATC5_bit = 0;
 
     ANSELD = 0x00;
     TRISD = 0xFF;
@@ -1216,7 +1222,9 @@ void main() {
     TMR0IF_bit = 0;
     TMR0IE_bit = 1;
 
-    init_timer1();
+    dummy_pb = PORTB;
+    RBIF_bit = 0;
+    RBIE_bit = 1;
 
     RC1IE_bit = 1;
     PEIE_bit = 1;
