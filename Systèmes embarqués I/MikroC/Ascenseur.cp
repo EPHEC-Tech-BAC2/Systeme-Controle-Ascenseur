@@ -1,6 +1,7 @@
 #line 1 "C:/Users/moham/OneDrive/Documents/EPHEC TECH 2eme/Systeme embarqué/projet-final-a08_a211_25_26/Systèmes embarqués I/MikroC/Ascenseur.c"
 
 
+
 sbit LCD_RS at RB4_bit;
 sbit LCD_EN at RB5_bit;
 sbit LCD_D4 at RB0_bit;
@@ -13,7 +14,7 @@ sbit LCD_D4_Direction at TRISB0_bit;
 sbit LCD_D5_Direction at TRISB1_bit;
 sbit LCD_D6_Direction at TRISB2_bit;
 sbit LCD_D7_Direction at TRISB3_bit;
-#line 64 "C:/Users/moham/OneDrive/Documents/EPHEC TECH 2eme/Systeme embarqué/projet-final-a08_a211_25_26/Systèmes embarqués I/MikroC/Ascenseur.c"
+#line 75 "C:/Users/moham/OneDrive/Documents/EPHEC TECH 2eme/Systeme embarqué/projet-final-a08_a211_25_26/Systèmes embarqués I/MikroC/Ascenseur.c"
 unsigned char etage_actuel = 0;
 unsigned char etage_cible = 0;
 unsigned char en_mouvement = 0;
@@ -22,24 +23,30 @@ unsigned int poids_kg = 0;
 unsigned char ir_porte = 0;
 unsigned char req[ 4 ] = {0,0,0,0};
 
+
 unsigned char al_active = 0;
 unsigned char urg_active = 0;
 unsigned char mode_auto = 1;
+
 
 unsigned int poids_max =  630 ;
 unsigned int seuil_surge =  630 ;
 unsigned char surcharge_active = 0;
 
+
 unsigned int nb_session = 0;
 unsigned int nb_trajets = 0;
+
 
 unsigned char last_etage = 0;
 unsigned char vitesse_max_pc = 100;
 unsigned char vitesse_eeprom = 100;
 unsigned char pwm_max_eff = 255;
 
+
 unsigned char pwm_actuel = 0;
 unsigned int temps_trajet = 0;
+
 
 unsigned char position_inconnue = 0;
 unsigned char entre_etages = 0;
@@ -48,12 +55,14 @@ unsigned char moteur_actif = 0;
 
 unsigned char etat_surcharge = 0;
 
+
 volatile unsigned char timer0_flag = 0;
 volatile unsigned int timer0_count = 0;
 volatile unsigned char urgence_flag = 0;
 volatile unsigned char al_flag = 0;
 
 volatile unsigned char suppress_data_count = 0;
+
 
 
 
@@ -67,8 +76,10 @@ volatile unsigned char cmd_qtail = 0;
 
 volatile unsigned char stop_demande = 0;
 
+
 char l1[20];
 char l2[20];
+
 
 void recalc_pwm_max();
 unsigned char pop_cmd(char *dest);
@@ -108,8 +119,10 @@ unsigned char prochain_req();
 void deplacer_vers(unsigned char cible);
 void parser_cmd(char *buf);
 
+
 void interrupt() {
  char c;
+
 
  if (TMR0IE_bit && TMR0IF_bit) {
  TMR0IF_bit = 0;
@@ -119,9 +132,11 @@ void interrupt() {
  timer0_count++;
  }
 
+
  if (RBIE_bit && RBIF_bit) {
  unsigned char pb = PORTB;
  RBIF_bit = 0;
+
 
  if ((pb & 0x40) && !urg_active) {
  LATC0_bit = 0;
@@ -134,6 +149,7 @@ void interrupt() {
  urgence_flag = 1;
  }
 
+
  if ((pb & 0x80) && !al_active) {
  LATC0_bit = 0;
  LATC1_bit = 0;
@@ -145,6 +161,7 @@ void interrupt() {
   LATA3_bit  = 1;
  }
  }
+
 
  if (RC1IE_bit && RC1IF_bit) {
  unsigned char j;
@@ -183,6 +200,7 @@ void interrupt() {
  }
 }
 
+
 void eep_write_byte(unsigned char addr, unsigned char val) {
  I2C1_Start();
  I2C1_Wr( 0xA0 );
@@ -215,11 +233,13 @@ unsigned int eep_read_word(unsigned char addr) {
  return (hi << 8) | lo;
 }
 
+
 void recalc_pwm_max() {
  pwm_max_eff = (unsigned char)((unsigned int)vitesse_max_pc * 255 / 100);
  if (pwm_max_eff < (unsigned char)( 80  + 20))
  pwm_max_eff = (unsigned char)( 80  + 20);
 }
+
 
 unsigned char pop_cmd(char *dest) {
  unsigned char i;
@@ -232,6 +252,7 @@ unsigned char pop_cmd(char *dest) {
  GIE_bit = 1;
  return 1;
 }
+
 
 void eeprom_charger() {
  unsigned int stored_traj;
@@ -270,6 +291,7 @@ void eeprom_charger() {
  recalc_pwm_max();
 }
 
+
 void eeprom_sauver_trajet() {
  nb_session++;
  nb_trajets++;
@@ -277,6 +299,7 @@ void eeprom_sauver_trajet() {
  eep_write_word(0x00, nb_trajets);
  eep_write_byte(0x02, last_etage);
 }
+
 
 void eeprom_reset() {
  nb_trajets = 0;
@@ -293,6 +316,7 @@ void eeprom_reset() {
  eep_write_byte(0x05, 0x00);
 }
 
+
 void set_pwm(unsigned char duty) {
  PWM1_Set_Duty(duty);
 
@@ -305,6 +329,7 @@ void set_pwm(unsigned char duty) {
  pwm_actuel = 0;
  }
 }
+
 
 void uart_send_data() {
  char trame[90];
@@ -330,6 +355,7 @@ void uart_send_data() {
  UART1_Write_Text(trame);
 }
 
+
 void uart_send_eeprom() {
  char trame[60];
  suppress_data_count = 1;
@@ -339,8 +365,10 @@ void uart_send_eeprom() {
  UART1_Write_Text(trame);
 }
 
+
 void uart_ack_ok() { UART1_Write_Text("<ACK,OK>\r\n"); }
 void uart_ack_err() { UART1_Write_Text("<ACK,ERR>\r\n"); }
+
 
 void lire_capteurs() {
  unsigned long somme = 0;
@@ -359,6 +387,7 @@ void lire_capteurs() {
  poids_kg = (unsigned int)((raw_adc * 900UL) /  900 );
 }
 
+
 void maj_surcharge(unsigned char force_transition) {
  surcharge_active = (poids_kg >= seuil_surge) ? 1 : 0;
  if (force_transition) {
@@ -367,6 +396,7 @@ void maj_surcharge(unsigned char force_transition) {
  gerer_leds();
 }
 
+
 void gerer_leds() {
  if (mode_auto)  LATA2_bit  = ir_porte ? 1 : 0;
  else  LATA2_bit  = porte_cmd ? 1 : 0;
@@ -374,9 +404,11 @@ void gerer_leds() {
   LATA3_bit  = (surcharge_active || urg_active || al_active) ? 1 : 0;
 }
 
+
 char etat_porte_char() {
  return (mode_auto ? ir_porte : porte_cmd) ? 'O' : 'F';
 }
+
 
 void lcd_build_surcharge_l2(char *buf) {
  unsigned int v = poids_max;
@@ -399,6 +431,7 @@ void lcd_build_surcharge_l2(char *buf) {
  buf[15] = ' ';
  buf[16] = '\0';
 }
+
 
 void afficher_lcd() {
  char dir_str[3];
@@ -440,10 +473,12 @@ void afficher_lcd() {
  Lcd_Out(2, 1, l2);
 }
 
+
 void lcd_transition() {
  Lcd_Cmd(_LCD_CLEAR);
  afficher_lcd();
 }
+
 
 void lcd_update_transit() {
  char dir_str[3];
@@ -457,15 +492,16 @@ void lcd_update_transit() {
  } else {
  mode_str[0]='M'; mode_str[1]='a'; mode_str[2]='n'; mode_str[3]='u'; mode_str[4]='\0';
  }
-#line 513 "C:/Users/moham/OneDrive/Documents/EPHEC TECH 2eme/Systeme embarqué/projet-final-a08_a211_25_26/Systèmes embarqués I/MikroC/Ascenseur.c"
+#line 558 "C:/Users/moham/OneDrive/Documents/EPHEC TECH 2eme/Systeme embarqué/projet-final-a08_a211_25_26/Systèmes embarqués I/MikroC/Ascenseur.c"
  sprintf(l1, "ET:%u->%u %s %s ",
  (unsigned)etage_actuel, (unsigned)etage_cible, dir_str, mode_str);
  Lcd_Out(1, 1, l1);
 
  sprintf(l2, "P:%3dkg IR:%c    ", (int)poids_kg, etat_porte_char());
  Lcd_Out(2, 1, l2);
-#line 523 "C:/Users/moham/OneDrive/Documents/EPHEC TECH 2eme/Systeme embarqué/projet-final-a08_a211_25_26/Systèmes embarqués I/MikroC/Ascenseur.c"
+#line 568 "C:/Users/moham/OneDrive/Documents/EPHEC TECH 2eme/Systeme embarqué/projet-final-a08_a211_25_26/Systèmes embarqués I/MikroC/Ascenseur.c"
 }
+
 
 void appliquer_pmax(unsigned int val) {
  if (val < 1) val = 1;
@@ -480,6 +516,7 @@ void appliquer_pmax(unsigned int val) {
  uart_ack_ok();
  uart_send_data();
 }
+
 
 void appliquer_spd(unsigned char val) {
  if (val > 100) val = 100;
@@ -496,6 +533,7 @@ void appliquer_spd(unsigned char val) {
  uart_ack_ok();
  uart_send_data();
 }
+
 
 void attendre_ms(unsigned int ms) {
  unsigned int elapsed = 0;
@@ -519,6 +557,7 @@ void attendre_ms(unsigned int ms) {
  }
 
  if (urgence_flag || stop_demande) return;
+
 
  if (pop_cmd(local_cmd)) {
 
@@ -583,6 +622,7 @@ void attendre_ms(unsigned int ms) {
 
  if (urgence_flag || stop_demande) return;
 
+
  for (b = 0; b <  4 ; b++) {
  if (PORTD & (1 << b)) {
  if (direction == 'U' && b > etage_actuel) req[b] = 1;
@@ -604,6 +644,7 @@ void attendre_ms(unsigned int ms) {
  elapsed +=  20 ;
  }
 }
+
 
 void rampe_accel() {
  unsigned char i;
@@ -631,6 +672,7 @@ void rampe_accel() {
  Delay_ms( 20 );
  }
 }
+
 
 void rampe_decel() {
  unsigned char i;
@@ -661,6 +703,7 @@ void rampe_decel() {
   do { LATC0_bit = 0; LATC1_bit = 0; PWM1_Set_Duty(0); moteur_actif = 0; pwm_actuel = 0; } while(0) ;
 }
 
+
 void demarrer_moteur(char sens) {
  if (sens == 'U')  do { LATC0_bit = 1; LATC1_bit = 0; moteur_actif = 1; } while(0) ;
  else  do { LATC0_bit = 0; LATC1_bit = 1; moteur_actif = 1; } while(0) ;
@@ -670,6 +713,7 @@ void demarrer_moteur(char sens) {
  rampe_accel();
 }
 
+
 void scanner_req() {
  if (PORTD.F0) req[0] = 1;
  if (PORTD.F1) req[1] = 1;
@@ -677,10 +721,12 @@ void scanner_req() {
  if (PORTD.F3) req[3] = 1;
 }
 
+
 void vider_req() {
  unsigned char i;
  for (i = 0; i <  4 ; i++) req[i] = 0;
 }
+
 
 unsigned char prochain_req() {
  unsigned char i, nearest;
@@ -726,6 +772,7 @@ unsigned char prochain_req() {
 
  return 0xFF;
 }
+
 
 void deplacer_vers(unsigned char cible) {
  char sens;
@@ -850,6 +897,7 @@ fin_deplacement:
 
  stop_demande = 0;
 }
+
 
 void parser_cmd(char *buf) {
  char *p;
@@ -1111,15 +1159,18 @@ void parser_cmd(char *buf) {
  uart_ack_err();
 }
 
+
 void main() {
  unsigned char prochain;
  char cmd[50];
  unsigned char surge_now;
  unsigned char dummy_pb;
 
+
  PWM1_Init(5000);
  PWM1_Set_Duty(0);
  PWM1_Start();
+
 
  ANSELA = 0x02;
  TRISA0_bit = 1;
@@ -1129,10 +1180,12 @@ void main() {
  LATA2_bit = 0;
  LATA3_bit = 0;
 
+
  ANSELB = 0x00;
  TRISB6_bit = 1;
  TRISB7_bit = 1;
  INTCON2.RBPU = 1;
+
 
  ANSELC = 0x00;
  TRISC0_bit = 0;
@@ -1145,19 +1198,24 @@ void main() {
  LATC0_bit = 0;
  LATC1_bit = 0;
 
+
  ANSELD = 0x00;
  TRISD = 0xFF;
+
 
  ADC_Init();
  ANSELA = 0x02;
  TRISA0_bit = 1;
  TRISA1_bit = 1;
 
+
  UART1_Init(9600);
  Delay_ms(100);
 
+
  I2C1_Init(100000);
  Delay_ms(10);
+
 
  eeprom_charger();
 
@@ -1171,10 +1229,12 @@ void main() {
  RBIF_bit = 0;
  RBIE_bit = 1;
 
+
  RC1IE_bit = 1;
  PEIE_bit = 1;
  GIE_bit = 1;
  T0CON = 0x87;
+
 
  Lcd_Init();
  Lcd_Cmd(_LCD_CLEAR);
@@ -1190,6 +1250,7 @@ void main() {
  maj_surcharge(1);
  lcd_transition();
 
+
  while (1) {
 
  if ( PORTB.F6  && !urg_active) {
@@ -1203,6 +1264,7 @@ void main() {
  urgence_flag = 1;
  }
  }
+
 
  if (urgence_flag) {
  urgence_flag = 0;
@@ -1256,6 +1318,7 @@ void main() {
  lcd_transition();
  uart_send_data();
  }
+
 
  if (al_flag) {
  al_flag = 0;
@@ -1362,6 +1425,7 @@ void main() {
  if (moteur_actif) lcd_update_transit();
  else afficher_lcd();
  }
+
 
  if (mode_auto && !urg_active && !al_active && !position_inconnue) {
  if (!surcharge_active) {

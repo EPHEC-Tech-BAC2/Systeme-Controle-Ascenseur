@@ -1,5 +1,6 @@
 #define SIMULATION_PROTEUS
 
+// Connexions de l'afficheur LCD
 sbit LCD_RS at RB4_bit;
 sbit LCD_EN at RB5_bit;
 sbit LCD_D4 at RB0_bit;
@@ -13,20 +14,25 @@ sbit LCD_D5_Direction at TRISB1_bit;
 sbit LCD_D6_Direction at TRISB2_bit;
 sbit LCD_D7_Direction at TRISB3_bit;
 
+// LEDs d'etat
 #define LED1       LATA2_bit
 #define LED2       LATA3_bit
 
+// Boutons poussoirs
 #define BP_URGENCE PORTB.F6
 #define BP_ALARME  PORTB.F7
 #define BP_ACQ     PORTD.F4
 
+// Actions moteur et etat actif
 #define MOTEUR_MONTER()    do { LATC0_bit = 1; LATC1_bit = 0; moteur_actif = 1; } while(0)
 #define MOTEUR_DESCENDRE()  do { LATC0_bit = 0; LATC1_bit = 1; moteur_actif = 1; } while(0)
 #define MOTEUR_ARRETER()    do { LATC0_bit = 0; LATC1_bit = 0; PWM1_Set_Duty(0); moteur_actif = 0; pwm_actuel = 0; } while(0)
 
+// Parametres pour les rampes PWM
 #define PWM_MIN     80
 #define PWM_PALIERS  6
 
+// Temporisations adaptees pour Proteus ou le reel
 #ifdef SIMULATION_PROTEUS
   #define MS_PALIER           20
   #define MS_CROISIERE        500
@@ -45,22 +51,27 @@ sbit LCD_D7_Direction at TRISB3_bit;
   #define MS_LOOP_STEP        50
 #endif
 
+// Ajustement temps de croisiere pour 1 seul etage
 #define MS_CROISIERE_1ET  (MS_CROISIERE - PWM_PALIERS * MS_PALIER)
 
 #define _FOSC_HZ        8000000UL
 
+// Configuration de la base de temps du Timer0 (1 seconde)
 #define T0_TICKS_1S     (_FOSC_HZ / 1024UL)
 #define T0_RELOAD       (65536UL - T0_TICKS_1S)
 #define T0_RELOAD_H     ((unsigned char)((T0_RELOAD >> 8) & 0xFF))
 #define T0_RELOAD_L     ((unsigned char)(T0_RELOAD & 0xFF))
 
+// Constantes de l'application
 #define NB_ETAGES        4
 #define POIDS_MAX_DEF    630
 #define POT_ADC_MAX      900
 
+// Adresses de l'EEPROM I2C
 #define EEPROM_W         0xA0
 #define EEPROM_R         0xA1
 
+// Variables globales de suivi de la cabine
 unsigned char etage_actuel      = 0;
 unsigned char etage_cible       = 0;
 unsigned char en_mouvement      = 0;
@@ -69,25 +80,31 @@ unsigned int  poids_kg          = 0;
 unsigned char ir_porte          = 0;
 unsigned char req[NB_ETAGES]    = {0,0,0,0};
 
+// Variables pour la securite et les modes
 unsigned char al_active         = 0;
 unsigned char urg_active        = 0;
 unsigned char mode_auto         = 1;
 
+// Variables pour le contrôle du poids
 unsigned int  poids_max         = POIDS_MAX_DEF;
 unsigned int  seuil_surge       = POIDS_MAX_DEF;
 unsigned char surcharge_active  = 0;
 
+// Compteurs de suivi
 unsigned int  nb_session        = 0;
 unsigned int  nb_trajets        = 0;
 
+// Sauvegardes et limites de vitesse
 unsigned char last_etage        = 0;
 unsigned char vitesse_max_pc    = 100;
 unsigned char vitesse_eeprom    = 100;
 unsigned char pwm_max_eff       = 255;
 
+// Variables de mesure temps/vitesse
 unsigned char pwm_actuel        = 0;
 unsigned int  temps_trajet      = 0;
 
+// Flags de positionnement et verrouillage
 unsigned char position_inconnue = 0;
 unsigned char entre_etages      = 0;
 unsigned char porte_cmd         = 0;
@@ -95,6 +112,7 @@ unsigned char moteur_actif      = 0;
 
 unsigned char etat_surcharge    = 0;
 
+// Flags de communication avec les interruptions
 volatile unsigned char timer0_flag  = 0;
 volatile unsigned int  timer0_count = 0;
 volatile unsigned char urgence_flag = 0;
@@ -102,6 +120,7 @@ volatile unsigned char al_flag      = 0;
 
 volatile unsigned char suppress_data_count = 0;
 
+// Parametres de la file d'attente UART
 #define CMD_QSIZE 4
 #define CMD_QLEN  40
 
@@ -114,9 +133,11 @@ volatile unsigned char cmd_qtail = 0;
 
 volatile unsigned char stop_demande = 0;
 
+// Buffers memoire pour les deux lignes du LCD
 char l1[20];
 char l2[20];
 
+// Déclarations des fonctions
 void recalc_pwm_max();
 unsigned char pop_cmd(char *dest);
 void eeprom_charger();
@@ -155,9 +176,11 @@ unsigned char prochain_req();
 void deplacer_vers(unsigned char cible);
 void parser_cmd(char *buf);
 
+// Routine d'interruption
 void interrupt() {
     char c;
 
+    // Gestion du rafraîchissement par le Timer0
     if (TMR0IE_bit && TMR0IF_bit) {
         TMR0IF_bit = 0;
         TMR0H = T0_RELOAD_H;
@@ -166,10 +189,12 @@ void interrupt() {
         timer0_count++;
     }
 
+    // Gestion des evenements sur les boutons poussoirs du PORTB
     if (RBIE_bit && RBIF_bit) {
         unsigned char pb = PORTB;
         RBIF_bit = 0;
 
+        // Detection Urgence
         if ((pb & 0x40) && !urg_active) {
             LATC0_bit = 0;
             LATC1_bit = 0;
@@ -181,6 +206,7 @@ void interrupt() {
             urgence_flag = 1;
         }
 
+        // Detection Alarme
         if ((pb & 0x80) && !al_active) {
             LATC0_bit = 0;
             LATC1_bit = 0;
@@ -193,6 +219,7 @@ void interrupt() {
         }
     }
 
+    // Reception UART et stockage dans le buffer circulaire
     if (RC1IE_bit && RC1IF_bit) {
         unsigned char j;
         unsigned char n;
@@ -230,6 +257,7 @@ void interrupt() {
     }
 }
 
+// Fonctions bas niveau pour l'EEPROM I2C
 void eep_write_byte(unsigned char addr, unsigned char val) {
     I2C1_Start();
     I2C1_Wr(EEPROM_W);
@@ -262,12 +290,14 @@ unsigned int eep_read_word(unsigned char addr) {
     return (hi << 8) | lo;
 }
 
+// Mise a jour de la limite haute de la PWM
 void recalc_pwm_max() {
     pwm_max_eff = (unsigned char)((unsigned int)vitesse_max_pc * 255 / 100);
     if (pwm_max_eff < (unsigned char)(PWM_MIN + 20))
         pwm_max_eff = (unsigned char)(PWM_MIN + 20);
 }
 
+// Recorupere et retire une commande de la file d'attente UART
 unsigned char pop_cmd(char *dest) {
     unsigned char i;
     if (cmd_qhead == cmd_qtail) return 0;
@@ -280,6 +310,7 @@ unsigned char pop_cmd(char *dest) {
     return 1;
 }
 
+// Lecture des donnees utilisateur stockees en memoire non volatile
 void eeprom_charger() {
     unsigned int  stored_traj;
     unsigned char stored_vit;
@@ -317,6 +348,7 @@ void eeprom_charger() {
     recalc_pwm_max();
 }
 
+// Enregistre les donnees du trajet actuel en memoire
 void eeprom_sauver_trajet() {
     nb_session++;
     nb_trajets++;
@@ -325,6 +357,7 @@ void eeprom_sauver_trajet() {
     eep_write_byte(0x02, last_etage);
 }
 
+// Reset de la memoire EEPROM
 void eeprom_reset() {
     nb_trajets = 0;
     last_etage = 0;
@@ -340,6 +373,7 @@ void eeprom_reset() {
     eep_write_byte(0x05, 0x00);
 }
 
+// Calcul et application du rapport cyclique pour le moteur
 void set_pwm(unsigned char duty) {
     PWM1_Set_Duty(duty);
 
@@ -353,6 +387,7 @@ void set_pwm(unsigned char duty) {
     }
 }
 
+// Envoi de l'etat complet de la machine par liaison serie
 void uart_send_data() {
     char trame[90];
     unsigned char dir_n, prt_n;
@@ -377,6 +412,7 @@ void uart_send_data() {
     UART1_Write_Text(trame);
 }
 
+// Envoi des donnees de l'EEPROM par liaison serie
 void uart_send_eeprom() {
     char trame[60];
     suppress_data_count = 1;
@@ -386,9 +422,11 @@ void uart_send_eeprom() {
     UART1_Write_Text(trame);
 }
 
+// Retours d'acquittement UART simple
 void uart_ack_ok()  { UART1_Write_Text("<ACK,OK>\r\n");  }
 void uart_ack_err() { UART1_Write_Text("<ACK,ERR>\r\n"); }
 
+// Moyenne glissante sur 8 valeurs ADC pour obtenir la charge cabine
 void lire_capteurs() {
     unsigned long somme = 0;
     unsigned int  raw_adc;
@@ -406,6 +444,7 @@ void lire_capteurs() {
     poids_kg = (unsigned int)((raw_adc * 900UL) / POT_ADC_MAX);
 }
 
+// Mise a jour du flag de surcharge
 void maj_surcharge(unsigned char force_transition) {
     surcharge_active = (poids_kg >= seuil_surge) ? 1 : 0;
     if (force_transition) {
@@ -414,6 +453,7 @@ void maj_surcharge(unsigned char force_transition) {
     gerer_leds();
 }
 
+// Mise a jour visuelle des indicateurs lumineux
 void gerer_leds() {
     if (mode_auto) LED1 = ir_porte ? 1 : 0;
     else           LED1 = porte_cmd ? 1 : 0;
@@ -421,10 +461,12 @@ void gerer_leds() {
     LED2 = (surcharge_active || urg_active || al_active) ? 1 : 0;
 }
 
+// Convertit le statut de la porte en caractere lisible
 char etat_porte_char() {
     return (mode_auto ? ir_porte : porte_cmd) ? 'O' : 'F';
 }
 
+// Generation de la chaîne de texte liee a la surcharge pour la ligne 2 du LCD
 void lcd_build_surcharge_l2(char *buf) {
     unsigned int v = poids_max;
 
@@ -447,6 +489,7 @@ void lcd_build_surcharge_l2(char *buf) {
     buf[16] = '\0';
 }
 
+// Gestion des informations de l'ecran LCD principal au repos
 void afficher_lcd() {
     char dir_str[3];
     char mode_str[5];
@@ -487,11 +530,13 @@ void afficher_lcd() {
     Lcd_Out(2, 1, l2);
 }
 
+// Transition propre de l'affichage LCD
 void lcd_transition() {
     Lcd_Cmd(_LCD_CLEAR);
     afficher_lcd();
 }
 
+// Gestion de l'affichage specifique lors des transits cabine
 void lcd_update_transit() {
     char dir_str[3];
     char mode_str[5];
@@ -522,6 +567,7 @@ void lcd_update_transit() {
 #endif
 }
 
+// Applique et met a jour la configuration de charge maximale
 void appliquer_pmax(unsigned int val) {
     if (val < 1)   val = 1;
     if (val > 999) val = 999;
@@ -536,6 +582,7 @@ void appliquer_pmax(unsigned int val) {
     uart_send_data();
 }
 
+// Applique et met a jour la vitesse cible
 void appliquer_spd(unsigned char val) {
     if (val > 100) val = 100;
     if (val < 10)  val = 10;
@@ -552,6 +599,7 @@ void appliquer_spd(unsigned char val) {
     uart_send_data();
 }
 
+// Attente temporisee non bloquante qui surveille la securite et les ordres serie
 void attendre_ms(unsigned int ms) {
     unsigned int  elapsed = 0;
     unsigned char b;
@@ -575,6 +623,7 @@ void attendre_ms(unsigned int ms) {
 
         if (urgence_flag || stop_demande) return;
 
+        // Analyse immediate des trames en attente dans la file
         if (pop_cmd(local_cmd)) {
 
             if (strstr(local_cmd, "CMD,STOP")) {
@@ -638,6 +687,7 @@ void attendre_ms(unsigned int ms) {
 
         if (urgence_flag || stop_demande) return;
 
+        // Lecture immediate des boutons poussoirs d'etages (PORTD)
         for (b = 0; b < NB_ETAGES; b++) {
             if (PORTD & (1 << b)) {
                 if      (direction == 'U' && b > etage_actuel) req[b] = 1;
@@ -660,6 +710,7 @@ void attendre_ms(unsigned int ms) {
     }
 }
 
+// Acceleration graduelle du moteur
 void rampe_accel() {
     unsigned char i;
     unsigned int  pwm;
@@ -687,6 +738,7 @@ void rampe_accel() {
     }
 }
 
+// Deceleration progressive du moteur avant l'arret
 void rampe_decel() {
     unsigned char i;
     unsigned int  pwm;
@@ -716,6 +768,7 @@ void rampe_decel() {
     MOTEUR_ARRETER();
 }
 
+// Initialise l'activation moteur et lance la rampe d'acceleration
 void demarrer_moteur(char sens) {
     if (sens == 'U') MOTEUR_MONTER();
     else             MOTEUR_DESCENDRE();
@@ -725,6 +778,7 @@ void demarrer_moteur(char sens) {
     rampe_accel();
 }
 
+// Lecture brute des entrees logiques des appels d'etages
 void scanner_req() {
     if (PORTD.F0) req[0] = 1;
     if (PORTD.F1) req[1] = 1;
@@ -732,11 +786,13 @@ void scanner_req() {
     if (PORTD.F3) req[3] = 1;
 }
 
+// Vide le tableau complet des demandes
 void vider_req() {
     unsigned char i;
     for (i = 0; i < NB_ETAGES; i++) req[i] = 0;
 }
 
+// Choisit l'etage prioritaire a desservir selon le sens actuel
 unsigned char prochain_req() {
     unsigned char i, nearest;
     unsigned int  d, min_d;
@@ -782,6 +838,7 @@ unsigned char prochain_req() {
     return 0xFF;
 }
 
+// Logique globale du cycle de deplacement entre les etages
 void deplacer_vers(unsigned char cible) {
     char          sens;
     unsigned char nb_et, i, est_dernier;
@@ -906,6 +963,7 @@ fin_deplacement:
     stop_demande = 0;
 }
 
+// Decodage des commandes textes recues via la communication UART
 void parser_cmd(char *buf) {
     char         *p;
     unsigned char cible;
@@ -1166,16 +1224,19 @@ void parser_cmd(char *buf) {
     uart_ack_err();
 }
 
+// Fonction d'entree de l'application
 void main() {
     unsigned char prochain;
     char          cmd[50];
     unsigned char surge_now;
     unsigned char dummy_pb;
 
+    // Config PWM
     PWM1_Init(5000);
     PWM1_Set_Duty(0);
     PWM1_Start();
 
+    // Config I/O PORTA
     ANSELA = 0x02;
     TRISA0_bit = 1;
     TRISA1_bit = 1;
@@ -1184,11 +1245,13 @@ void main() {
     LATA2_bit = 0;
     LATA3_bit = 0;
 
+    // Config I/O PORTB
     ANSELB = 0x00;
     TRISB6_bit = 1;
     TRISB7_bit = 1;
     INTCON2.RBPU = 1;
 
+    // Config I/O PORTC
     ANSELC = 0x00;
     TRISC0_bit = 0;
     TRISC1_bit = 0;
@@ -1200,20 +1263,25 @@ void main() {
     LATC0_bit = 0;
     LATC1_bit = 0;
 
+    // Config I/O PORTD
     ANSELD = 0x00;
     TRISD = 0xFF;
 
+    // Config ADC
     ADC_Init();
     ANSELA = 0x02;
     TRISA0_bit = 1;
     TRISA1_bit = 1;
 
+    // Config UART (9600 bauds)
     UART1_Init(9600);
     Delay_ms(100);
 
+    // Config Bus I2C
     I2C1_Init(100000);
     Delay_ms(10);
 
+    // Initialisation memoire et Timer0
     eeprom_charger();
 
     T0CON = 0x07;
@@ -1226,11 +1294,13 @@ void main() {
     RBIF_bit = 0;
     RBIE_bit = 1;
 
+    // Activation globale des interruptions
     RC1IE_bit = 1;
     PEIE_bit = 1;
     GIE_bit = 1;
     T0CON = 0x87;
 
+    // Message d'accueil LCD
     Lcd_Init();
     Lcd_Cmd(_LCD_CLEAR);
     Lcd_Cmd(_LCD_CURSOR_OFF);
@@ -1245,6 +1315,7 @@ void main() {
     maj_surcharge(1);
     lcd_transition();
 
+    // Boucle de scrutation principale
     while (1) {
 
         if (BP_URGENCE && !urg_active) {
@@ -1259,6 +1330,7 @@ void main() {
             }
         }
 
+        // Cycle d'arret d'urgence et attente d'acquittement
         if (urgence_flag) {
             urgence_flag = 0;
             etat_surcharge = 0;
@@ -1312,6 +1384,7 @@ void main() {
             uart_send_data();
         }
 
+        // Cycle d'alarme active et attente d'acquittement
         if (al_flag) {
             al_flag = 0;
             vider_req();
@@ -1418,6 +1491,7 @@ void main() {
             else              afficher_lcd();
         }
 
+        // Routage automatique en fonction des requêtes d'etages recoltees
         if (mode_auto && !urg_active && !al_active && !position_inconnue) {
             if (!surcharge_active) {
                 scanner_req();
