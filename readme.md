@@ -1,50 +1,58 @@
-# A211 - Systèmes embarqués 1 - 2025-2026
-# A208 - Acquisition et visualisation de données - 2025-2026
-## Projet final du 2ème quadrimestre
+# **🛗 Système de contrôle automatique d'un ascenseur**
 
+# **A211 — Systèmes embarqués I** &nbsp;|&nbsp; **A208 — Acquisition et visualisation de données**
+### Projet final du 2ᵉ quadrimestre — EPHEC Tech — Année académique 2025-2026
 
-**Binôme: A08**
-- NOM Prénom (Matricule)
+**Binôme A08**
 - EL YAZAMI Yassine (HE305212)
 - TABICH Mohamed (HE305311)
 
-**Objectifs :**  
+**Professeurs :** Emile COSTA, François DONNAY
+**Plateforme :** Carte EasyPIC V7 — PIC18F45K22 8 MHz — MikroC PRO / LabVIEW
 
-**Initialisation du projet**
+## 📋 Contexte
 
-- Création du dépôt GitHub du projet final A208 & A211
-- Ajout du fichier README.md avec description du projet
-- Mise en place de la structure des dossiers (MikroC / LabVIEW / Rapport / Proteus)
-- Définition du scénario : système de contrôle automatique d'un ascenseur
+Ce projet combine deux unités d'enseignement complémentaires :
 
-**Cahier des charges**
-  
-- Rédaction du cahier des charges complet (A208 & A211)
-- Création de la carte mentale (Mind Map) — 6 branches principales
-- Réalisation du schéma fonctionnel par blocs (Hardware)
-- Conception du croquis de la face avant LabVIEW
-- Définition du protocole de communication UART bidirectionnel (trames < >)
-- Description complète des périphériques utilisés et de leurs rôles
-- Description du mode automatique et du mode manuel
-- Définition des 3 interruptions simultanées (Timer0 / Externe / UART RX)
-- Définition de l'utilisation de la mémoire EEPROM I²C
-- Dépôt du cahier des charges sur Moodle au format PDF
+- **A211 — Systèmes embarqués I** : programmation du microcontrôleur PIC18F45K22 en MikroC
+- **A208 — Acquisition et visualisation de données** : développement d'une interface de supervision sous LabVIEW
 
-**Mise à jour Cahier des charges — Version 2**   
+Le scénario retenu est celui d'un ascenseur desservant quatre étages (0 à 3), commandé localement par le microcontrôleur et supervisé à distance depuis un PC.
 
-- Correction du brochage des boutons d'étages BP1–BP4 → RD0, RD1, RD2, RD3
-- Correction du bouton d'acquittement ACQ → RD4
-- Reconfiguration du capteur IR sur RA0 en entrée digitale (simulation par bouton poussoir, pas d'ouverture automatique)
-- Remplacement du MOSFET IRF520 par le driver L293D : IN1=RC0, IN2=RC1, EN=RC2 (CCP1)
-- Ajout du brochage EEPROM I²C : SCL=RC3, SDA=RC4, adresse 0x50
-- Confirmation du brochage UART : TX=RC6, RX=RC7 à 9600 bauds
-- Mise à jour du tableau récapitulatif complet du brochage
-- Ajout de la section Historique des révisions (V1.0 → V2.0)
+## ⚙️ Description du système
 
-**Mise à jour Cahier des charges — Version 3**
- 
-- Suppression de <CMD,START> et <CMD,PAUSE> : logique gérée localement dans LabVIEW via Event Structure, aucune communication PIC nécessaire
-- Ajout de <CMD,MOT:STOP> : arrêt du moteur en mode manuel (EN=0 sur L293D) sans déclencher les routines d'alarme
-- Ajout de <CMD,EEP:RST> : remise à zéro des données sauvegardées en EEPROM (compteur trajets, dernier étage, vitesse configurée)
-- Mise à jour de la trame DATA : ajout des champs NB (compteur de trajets session courante — RAM, remis à 0 au redémarrage), PWM (rapport cyclique moteur en %) et TPS (durée du dernier trajet en secondes)
-- Ajout de la section Historique des révisions (V2.0 → V3.0)
+Le PIC18F45K22 pilote le moteur de translation via un pont en H L293D commandé en PWM, lit le poids de la cabine (ADC) et l'état de la porte, affiche l'état du système sur un écran LCD 16×2, et stocke le compteur de trajets, le dernier étage desservi et la vitesse configurée dans une mémoire EEPROM I²C.
+
+L'interface LabVIEW communique avec le PIC en UART (9600 bauds) via un protocole de trames délimitées par `<` et `>`, acquitté dans les deux sens. Elle permet de superviser en direct la position de la cabine, la charge, le mode de fonctionnement (automatique / manuel) et l'historique des trajets, ainsi que d'agir sur le système : appel d'étage, changement de mode, arrêt d'urgence, alarme, réglage des seuils de poids et de vitesse, consultation et remise à zéro de l'EEPROM.
+
+Le système gère trois sources d'interruption simultanées (base de temps Timer0, boutons urgence/alarme, réception UART), une file circulaire de commandes pour découpler réception et traitement, ainsi que des rampes d'accélération/décélération progressives du moteur.
+
+## 🧩 Défis rencontrés
+
+- Concevoir un protocole UART bidirectionnel robuste (trames encadrées, acquittement systématique, gestion des erreurs) sans bloquer le programme principal pendant les déplacements
+- Garder le système réactif pendant un trajet (arrêt d'urgence, commandes série, rafraîchissement LCD) via une fonction d'attente non bloquante surveillée en continu
+- Gérer les cas limites : arrêt d'urgence en cours de trajet (position devenue inconnue), surcharge détectée en cours d'appel, alarme déclenchée depuis le PIC ou depuis le PC
+- Faire cohabiter deux jeux de temporisations (simulation Proteus vs carte réelle) avec un seul et même code source, via une directive de compilation
+- Synchroniser côté LabVIEW le décodage des trames `DATA` / `EEP` (Scan From String) avec la mise à jour des indicateurs, des graphiques déroulants et de l'historique, sans perdre de trames
+
+## 🖥️ Logiciels utilisés
+
+| Outil | Usage |
+|---|---|
+| MikroC PRO for PIC | Firmware du PIC18F45K22 |
+| Proteus | Simulation électronique et validation du firmware |
+| LabVIEW + NI-VISA | Interface de supervision et communication série |
+| Git / GitHub | Gestion de version et documentation du projet |
+
+## 📁 Structure du dépôt
+
+```
+Systeme-Controle-Ascenseur/
+├── Acquisition et visualisation de données/  → VI LabVIEW (VISA, affichage, alarmes, sauvegarde)
+├── Cahier des charges du projet/       → 3 versions du cahier des charges
+├── Etat d'avancement/                  → suivi individuel de chaque membre
+├── Présentation PPT/                   → support de présentation orale
+├── Rapport final/                      → rapport complet remis (PDF)
+├── Ressources/                         → schémas et images du rapport
+└── Systèmes embarqués I/               → code MikroC + simulation Proteus
+```
